@@ -20,6 +20,7 @@ class SecurityController extends AbstractController
         return $this->json([
             'user' => $user->getEmail(),
             'token' => $this->getUser()?->getUserIdentifier(),
+            'validity' => '84600 seconds'
         ]);
     }
 }
