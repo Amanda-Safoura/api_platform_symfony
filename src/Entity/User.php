@@ -2,34 +2,15 @@
 
 namespace App\Entity;
 
-use ApiPlatform\Metadata\ApiResource;
-use ApiPlatform\Metadata\Get;
-use ApiPlatform\Metadata\GetCollection;
-use ApiPlatform\Metadata\Post;
-use ApiPlatform\Metadata\Patch;
-use App\Controller\RetrieveCurrentUserInfosController;
 use App\Repository\UserRepository;
+use Doctrine\Common\Collections\ArrayCollection;
+use Doctrine\Common\Collections\Collection;
 use Doctrine\ORM\Mapping as ORM;
 use Symfony\Component\Security\Core\User\PasswordAuthenticatedUserInterface;
 use Symfony\Component\Security\Core\User\UserInterface;
 
 #[ORM\Entity(repositoryClass: UserRepository::class)]
 #[ORM\UniqueConstraint(name: 'UNIQ_IDENTIFIER_USERNAME', fields: ['username'])]
-#[ApiResource(
-    security: "is_granted('ROLE_USER')",
-    operations: [
-        new Get(
-            name: 'retrieve me',
-            uriTemplate: '/users/me',
-            controller: RetrieveCurrentUserInfosController::class,
-            read: false,
-            description: 'Retrieve current user info'
-        ),
-        new Post(),
-        new Patch(),
-        new GetCollection()
-    ]
-)]
 class User implements UserInterface, PasswordAuthenticatedUserInterface
 {
     #[ORM\Id]
@@ -51,6 +32,20 @@ class User implements UserInterface, PasswordAuthenticatedUserInterface
      */
     #[ORM\Column]
     private ?string $password = null;
+
+    #[ORM\Column(length: 255)]
+    private ?string $email = null;
+
+    /**
+     * @var Collection<int, Audit>
+     */
+    #[ORM\OneToMany(targetEntity: Audit::class, mappedBy: 'agent_id')]
+    private Collection $audits;
+
+    public function __construct()
+    {
+        $this->audits = new ArrayCollection();
+    }
 
     public function getId(): ?int
     {
@@ -124,5 +119,47 @@ class User implements UserInterface, PasswordAuthenticatedUserInterface
     {
         // If you store any temporary, sensitive data on the user, clear it here
         // $this->plainPassword = null;
+    }
+
+    public function getEmail(): ?string
+    {
+        return $this->email;
+    }
+
+    public function setEmail(string $email): static
+    {
+        $this->email = $email;
+
+        return $this;
+    }
+
+    /**
+     * @return Collection<int, Audit>
+     */
+    public function getAudits(): Collection
+    {
+        return $this->audits;
+    }
+
+    public function addAudit(Audit $audit): static
+    {
+        if (!$this->audits->contains($audit)) {
+            $this->audits->add($audit);
+            $audit->setAgentId($this);
+        }
+
+        return $this;
+    }
+
+    public function removeAudit(Audit $audit): static
+    {
+        if ($this->audits->removeElement($audit)) {
+            // set the owning side to null (unless already changed)
+            if ($audit->getAgentId() === $this) {
+                $audit->setAgentId(null);
+            }
+        }
+
+        return $this;
     }
 }

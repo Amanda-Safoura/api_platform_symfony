@@ -2,13 +2,11 @@
 
 namespace App\Entity;
 
-use ApiPlatform\Metadata\ApiResource;
 use App\Repository\AuditReportRepository;
 use Doctrine\DBAL\Types\Types;
 use Doctrine\ORM\Mapping as ORM;
 
 #[ORM\Entity(repositoryClass: AuditReportRepository::class)]
-#[ApiResource]
 class AuditReport
 {
     #[ORM\Id]
@@ -16,9 +14,9 @@ class AuditReport
     #[ORM\Column]
     private ?int $id = null;
 
-    #[ORM\ManyToOne(inversedBy: 'auditReports')]
+    #[ORM\OneToOne(inversedBy: 'auditReport', cascade: ['persist', 'remove'])]
     #[ORM\JoinColumn(nullable: false)]
-    private ?AuditSection $audit_section = null;
+    private ?AuditSubsection $audit_subsection_id = null;
 
     #[ORM\Column(type: Types::TEXT, nullable: true)]
     private ?string $report_message = null;
@@ -29,23 +27,19 @@ class AuditReport
     #[ORM\Column]
     private ?bool $is_okey = null;
 
-    #[ORM\ManyToOne(inversedBy: 'auditReports')]
-    #[ORM\JoinColumn(nullable: false)]
-    private ?Audit $audit = null;
-
     public function getId(): ?int
     {
         return $this->id;
     }
 
-    public function getAuditSection(): ?AuditSection
+    public function getAuditSubsectionId(): ?AuditSubsection
     {
-        return $this->audit_section;
+        return $this->audit_subsection_id;
     }
 
-    public function setAuditSection(?AuditSection $audit_section): static
+    public function setAuditSubsectionId(AuditSubsection $audit_subsection_id): static
     {
-        $this->audit_section = $audit_section;
+        $this->audit_subsection_id = $audit_subsection_id;
 
         return $this;
     }
@@ -82,18 +76,6 @@ class AuditReport
     public function setIsOkey(bool $is_okey): static
     {
         $this->is_okey = $is_okey;
-
-        return $this;
-    }
-
-    public function getAudit(): ?Audit
-    {
-        return $this->audit;
-    }
-
-    public function setAudit(?Audit $audit): static
-    {
-        $this->audit = $audit;
 
         return $this;
     }

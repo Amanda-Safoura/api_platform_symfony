@@ -2,20 +2,22 @@
 
 namespace App\Entity;
 
-use ApiPlatform\Metadata\ApiResource;
 use App\Repository\AuditRepository;
 use Doctrine\Common\Collections\ArrayCollection;
 use Doctrine\Common\Collections\Collection;
 use Doctrine\ORM\Mapping as ORM;
 
 #[ORM\Entity(repositoryClass: AuditRepository::class)]
-#[ApiResource]
 class Audit
 {
     #[ORM\Id]
     #[ORM\GeneratedValue]
     #[ORM\Column]
     private ?int $id = null;
+
+    #[ORM\ManyToOne(inversedBy: 'audits')]
+    #[ORM\JoinColumn(nullable: false)]
+    private ?Company $company_id = null;
 
     #[ORM\Column(length: 255)]
     private ?string $name = null;
@@ -27,23 +29,34 @@ class Audit
     private ?\DateTimeImmutable $updatedAt = null;
 
     /**
-     * @var Collection<int, AuditReport>
+     * @var Collection<int, AuditSection>
      */
-    #[ORM\OneToMany(targetEntity: AuditReport::class, mappedBy: 'audit')]
-    private Collection $auditReports;
+    #[ORM\OneToMany(targetEntity: AuditSection::class, mappedBy: 'audit_id')]
+    private Collection $auditSections;
 
     #[ORM\ManyToOne(inversedBy: 'audits')]
-    #[ORM\JoinColumn(nullable: false)]
-    private ?Company $company = null;
+    private ?User $agent_id = null;
 
     public function __construct()
     {
-        $this->auditReports = new ArrayCollection();
+        $this->auditSections = new ArrayCollection();
     }
 
     public function getId(): ?int
     {
         return $this->id;
+    }
+
+    public function getCompanyId(): ?Company
+    {
+        return $this->company_id;
+    }
+
+    public function setCompanyId(?Company $company_id): static
+    {
+        $this->company_id = $company_id;
+
+        return $this;
     }
 
     public function getName(): ?string
@@ -83,43 +96,43 @@ class Audit
     }
 
     /**
-     * @return Collection<int, AuditReport>
+     * @return Collection<int, AuditSection>
      */
-    public function getAuditReports(): Collection
+    public function getAuditSections(): Collection
     {
-        return $this->auditReports;
+        return $this->auditSections;
     }
 
-    public function addAuditReport(AuditReport $auditReport): static
+    public function addAuditSection(AuditSection $auditSection): static
     {
-        if (!$this->auditReports->contains($auditReport)) {
-            $this->auditReports->add($auditReport);
-            $auditReport->setAudit($this);
+        if (!$this->auditSections->contains($auditSection)) {
+            $this->auditSections->add($auditSection);
+            $auditSection->setAuditId($this);
         }
 
         return $this;
     }
 
-    public function removeAuditReport(AuditReport $auditReport): static
+    public function removeAuditSection(AuditSection $auditSection): static
     {
-        if ($this->auditReports->removeElement($auditReport)) {
+        if ($this->auditSections->removeElement($auditSection)) {
             // set the owning side to null (unless already changed)
-            if ($auditReport->getAudit() === $this) {
-                $auditReport->setAudit(null);
+            if ($auditSection->getAuditId() === $this) {
+                $auditSection->setAuditId(null);
             }
         }
 
         return $this;
     }
 
-    public function getCompany(): ?Company
+    public function getAgentId(): ?User
     {
-        return $this->company;
+        return $this->agent_id;
     }
 
-    public function setCompany(?Company $company): static
+    public function setAgentId(?User $agent_id): static
     {
-        $this->company = $company;
+        $this->agent_id = $agent_id;
 
         return $this;
     }

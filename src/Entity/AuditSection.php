@@ -2,14 +2,12 @@
 
 namespace App\Entity;
 
-use ApiPlatform\Metadata\ApiResource;
 use App\Repository\AuditSectionRepository;
 use Doctrine\Common\Collections\ArrayCollection;
 use Doctrine\Common\Collections\Collection;
 use Doctrine\ORM\Mapping as ORM;
 
 #[ORM\Entity(repositoryClass: AuditSectionRepository::class)]
-#[ApiResource]
 class AuditSection
 {
     #[ORM\Id]
@@ -26,15 +24,19 @@ class AuditSection
     #[ORM\Column]
     private ?\DateTimeImmutable $updatedAt = null;
 
+    #[ORM\ManyToOne(inversedBy: 'auditSections')]
+    #[ORM\JoinColumn(nullable: false)]
+    private ?Audit $audit_id = null;
+
     /**
-     * @var Collection<int, AuditReport>
+     * @var Collection<int, AuditSubsection>
      */
-    #[ORM\OneToMany(targetEntity: AuditReport::class, mappedBy: 'audit_section')]
-    private Collection $auditReports;
+    #[ORM\OneToMany(targetEntity: AuditSubsection::class, mappedBy: 'audit_section_id')]
+    private Collection $auditSubsections;
 
     public function __construct()
     {
-        $this->auditReports = new ArrayCollection();
+        $this->auditSubsections = new ArrayCollection();
     }
 
     public function getId(): ?int
@@ -53,7 +55,7 @@ class AuditSection
 
         return $this;
     }
-    
+
     public function getCreatedAt(): ?\DateTimeImmutable
     {
         return $this->createdAt;
@@ -78,34 +80,45 @@ class AuditSection
         return $this;
     }
 
-    /**
-     * @return Collection<int, AuditReport>
-     */
-    public function getAuditReports(): Collection
+    public function getAuditId(): ?Audit
     {
-        return $this->auditReports;
+        return $this->audit_id;
     }
 
-    public function addAuditReport(AuditReport $auditReport): static
+    public function setAuditId(?Audit $audit_id): static
     {
-        if (!$this->auditReports->contains($auditReport)) {
-            $this->auditReports->add($auditReport);
-            $auditReport->setAuditSection($this);
+        $this->audit_id = $audit_id;
+
+        return $this;
+    }
+
+    /**
+     * @return Collection<int, AuditSubsection>
+     */
+    public function getAuditSubsections(): Collection
+    {
+        return $this->auditSubsections;
+    }
+
+    public function addAuditSubsection(AuditSubsection $auditSubsection): static
+    {
+        if (!$this->auditSubsections->contains($auditSubsection)) {
+            $this->auditSubsections->add($auditSubsection);
+            $auditSubsection->setAuditSectionId($this);
         }
 
         return $this;
     }
 
-    public function removeAuditReport(AuditReport $auditReport): static
+    public function removeAuditSubsection(AuditSubsection $auditSubsection): static
     {
-        if ($this->auditReports->removeElement($auditReport)) {
+        if ($this->auditSubsections->removeElement($auditSubsection)) {
             // set the owning side to null (unless already changed)
-            if ($auditReport->getAuditSection() === $this) {
-                $auditReport->setAuditSection(null);
+            if ($auditSubsection->getAuditSectionId() === $this) {
+                $auditSubsection->setAuditSectionId(null);
             }
         }
 
         return $this;
     }
-
 }

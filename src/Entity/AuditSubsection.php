@@ -2,13 +2,11 @@
 
 namespace App\Entity;
 
-use App\Repository\CompanyRepository;
-use Doctrine\Common\Collections\ArrayCollection;
-use Doctrine\Common\Collections\Collection;
+use App\Repository\AuditSubsectionRepository;
 use Doctrine\ORM\Mapping as ORM;
 
-#[ORM\Entity(repositoryClass: CompanyRepository::class)]
-class Company
+#[ORM\Entity(repositoryClass: AuditSubsectionRepository::class)]
+class AuditSubsection
 {
     #[ORM\Id]
     #[ORM\GeneratedValue]
@@ -18,22 +16,18 @@ class Company
     #[ORM\Column(length: 255)]
     private ?string $name = null;
 
+    #[ORM\ManyToOne(inversedBy: 'auditSubsections')]
+    #[ORM\JoinColumn(nullable: false)]
+    private ?AuditSection $audit_section_id = null;
+
     #[ORM\Column]
     private ?\DateTimeImmutable $createdAt = null;
 
     #[ORM\Column]
     private ?\DateTimeImmutable $updatedAt = null;
 
-    /**
-     * @var Collection<int, Audit>
-     */
-    #[ORM\OneToMany(targetEntity: Audit::class, mappedBy: 'company_id')]
-    private Collection $audits;
-
-    public function __construct()
-    {
-        $this->audits = new ArrayCollection();
-    }
+    #[ORM\OneToOne(mappedBy: 'audit_subsection_id', cascade: ['persist', 'remove'])]
+    private ?AuditReport $auditReport = null;
 
     public function getId(): ?int
     {
@@ -48,6 +42,18 @@ class Company
     public function setName(string $name): static
     {
         $this->name = $name;
+
+        return $this;
+    }
+
+    public function getAuditSectionId(): ?AuditSection
+    {
+        return $this->audit_section_id;
+    }
+
+    public function setAuditSectionId(?AuditSection $audit_section_id): static
+    {
+        $this->audit_section_id = $audit_section_id;
 
         return $this;
     }
@@ -76,32 +82,19 @@ class Company
         return $this;
     }
 
-    /**
-     * @return Collection<int, Audit>
-     */
-    public function getAudits(): Collection
+    public function getAuditReport(): ?AuditReport
     {
-        return $this->audits;
+        return $this->auditReport;
     }
 
-    public function addAudit(Audit $audit): static
+    public function setAuditReport(AuditReport $auditReport): static
     {
-        if (!$this->audits->contains($audit)) {
-            $this->audits->add($audit);
-            $audit->setCompanyId($this);
+        // set the owning side of the relation if necessary
+        if ($auditReport->getAuditSubsectionId() !== $this) {
+            $auditReport->setAuditSubsectionId($this);
         }
 
-        return $this;
-    }
-
-    public function removeAudit(Audit $audit): static
-    {
-        if ($this->audits->removeElement($audit)) {
-            // set the owning side to null (unless already changed)
-            if ($audit->getCompanyId() === $this) {
-                $audit->setCompanyId(null);
-            }
-        }
+        $this->auditReport = $auditReport;
 
         return $this;
     }
