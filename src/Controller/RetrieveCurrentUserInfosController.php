@@ -22,6 +22,7 @@ final class RetrieveCurrentUserInfosController extends AbstractController
             'id' => $user->getId(),
             'username' => $user->getUsername(),
             'email' => $user->getEmail(),
+            'roles' => $user->getRoles(),
         ]);
     }
 }

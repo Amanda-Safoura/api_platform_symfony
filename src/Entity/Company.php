@@ -2,12 +2,14 @@
 
 namespace App\Entity;
 
+use ApiPlatform\Metadata\ApiResource;
 use App\Repository\CompanyRepository;
 use Doctrine\Common\Collections\ArrayCollection;
 use Doctrine\Common\Collections\Collection;
 use Doctrine\ORM\Mapping as ORM;
 
 #[ORM\Entity(repositoryClass: CompanyRepository::class)]
+#[ApiResource()]
 class Company
 {
     #[ORM\Id]
@@ -27,7 +29,7 @@ class Company
     /**
      * @var Collection<int, Audit>
      */
-    #[ORM\OneToMany(targetEntity: Audit::class, mappedBy: 'company_id')]
+    #[ORM\OneToMany(targetEntity: Audit::class, mappedBy: 'company')]
     private Collection $audits;
 
     public function __construct()
@@ -88,7 +90,7 @@ class Company
     {
         if (!$this->audits->contains($audit)) {
             $this->audits->add($audit);
-            $audit->setCompanyId($this);
+            $audit->setCompany($this);
         }
 
         return $this;
@@ -98,8 +100,8 @@ class Company
     {
         if ($this->audits->removeElement($audit)) {
             // set the owning side to null (unless already changed)
-            if ($audit->getCompanyId() === $this) {
-                $audit->setCompanyId(null);
+            if ($audit->getCompany() === $this) {
+                $audit->setCompany(null);
             }
         }
 

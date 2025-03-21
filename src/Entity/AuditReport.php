@@ -2,11 +2,13 @@
 
 namespace App\Entity;
 
+use ApiPlatform\Metadata\ApiResource;
 use App\Repository\AuditReportRepository;
 use Doctrine\DBAL\Types\Types;
 use Doctrine\ORM\Mapping as ORM;
 
 #[ORM\Entity(repositoryClass: AuditReportRepository::class)]
+#[ApiResource()]
 class AuditReport
 {
     #[ORM\Id]
@@ -16,7 +18,7 @@ class AuditReport
 
     #[ORM\OneToOne(inversedBy: 'auditReport', cascade: ['persist', 'remove'])]
     #[ORM\JoinColumn(nullable: false)]
-    private ?AuditSubsection $audit_subsection_id = null;
+    private ?AuditSubsection $audit_subsection = null;
 
     #[ORM\Column(type: Types::TEXT, nullable: true)]
     private ?string $report_message = null;
@@ -32,14 +34,14 @@ class AuditReport
         return $this->id;
     }
 
-    public function getAuditSubsectionId(): ?AuditSubsection
+    public function getAuditSubsection(): ?AuditSubsection
     {
-        return $this->audit_subsection_id;
+        return $this->audit_subsection;
     }
 
-    public function setAuditSubsectionId(AuditSubsection $audit_subsection_id): static
+    public function setAuditSubsection(AuditSubsection $audit_subsection): static
     {
-        $this->audit_subsection_id = $audit_subsection_id;
+        $this->audit_subsection = $audit_subsection;
 
         return $this;
     }

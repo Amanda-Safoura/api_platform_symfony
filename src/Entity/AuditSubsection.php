@@ -2,10 +2,12 @@
 
 namespace App\Entity;
 
+use ApiPlatform\Metadata\ApiResource;
 use App\Repository\AuditSubsectionRepository;
 use Doctrine\ORM\Mapping as ORM;
 
 #[ORM\Entity(repositoryClass: AuditSubsectionRepository::class)]
+#[ApiResource()]
 class AuditSubsection
 {
     #[ORM\Id]
@@ -18,7 +20,7 @@ class AuditSubsection
 
     #[ORM\ManyToOne(inversedBy: 'auditSubsections')]
     #[ORM\JoinColumn(nullable: false)]
-    private ?AuditSection $audit_section_id = null;
+    private ?AuditSection $audit_section = null;
 
     #[ORM\Column]
     private ?\DateTimeImmutable $createdAt = null;
@@ -26,7 +28,7 @@ class AuditSubsection
     #[ORM\Column]
     private ?\DateTimeImmutable $updatedAt = null;
 
-    #[ORM\OneToOne(mappedBy: 'audit_subsection_id', cascade: ['persist', 'remove'])]
+    #[ORM\OneToOne(mappedBy: 'audit_subsection', cascade: ['persist', 'remove'])]
     private ?AuditReport $auditReport = null;
 
     public function getId(): ?int
@@ -46,14 +48,14 @@ class AuditSubsection
         return $this;
     }
 
-    public function getAuditSectionId(): ?AuditSection
+    public function getAuditSection(): ?AuditSection
     {
-        return $this->audit_section_id;
+        return $this->audit_section;
     }
 
-    public function setAuditSectionId(?AuditSection $audit_section_id): static
+    public function setAuditSection(?AuditSection $audit_section): static
     {
-        $this->audit_section_id = $audit_section_id;
+        $this->audit_section = $audit_section;
 
         return $this;
     }
@@ -90,8 +92,8 @@ class AuditSubsection
     public function setAuditReport(AuditReport $auditReport): static
     {
         // set the owning side of the relation if necessary
-        if ($auditReport->getAuditSubsectionId() !== $this) {
-            $auditReport->setAuditSubsectionId($this);
+        if ($auditReport->getAuditSubsection() !== $this) {
+            $auditReport->setAuditSubsection($this);
         }
 
         $this->auditReport = $auditReport;

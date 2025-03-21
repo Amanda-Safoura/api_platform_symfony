@@ -2,12 +2,14 @@
 
 namespace App\Entity;
 
+use ApiPlatform\Metadata\ApiResource;
 use App\Repository\AuditSectionRepository;
 use Doctrine\Common\Collections\ArrayCollection;
 use Doctrine\Common\Collections\Collection;
 use Doctrine\ORM\Mapping as ORM;
 
 #[ORM\Entity(repositoryClass: AuditSectionRepository::class)]
+#[ApiResource()]
 class AuditSection
 {
     #[ORM\Id]
@@ -26,12 +28,12 @@ class AuditSection
 
     #[ORM\ManyToOne(inversedBy: 'auditSections')]
     #[ORM\JoinColumn(nullable: false)]
-    private ?Audit $audit_id = null;
+    private ?Audit $audit = null;
 
     /**
      * @var Collection<int, AuditSubsection>
      */
-    #[ORM\OneToMany(targetEntity: AuditSubsection::class, mappedBy: 'audit_section_id')]
+    #[ORM\OneToMany(targetEntity: AuditSubsection::class, mappedBy: 'audit_section')]
     private Collection $auditSubsections;
 
     public function __construct()
@@ -80,14 +82,14 @@ class AuditSection
         return $this;
     }
 
-    public function getAuditId(): ?Audit
+    public function getAudit(): ?Audit
     {
-        return $this->audit_id;
+        return $this->audit;
     }
 
-    public function setAuditId(?Audit $audit_id): static
+    public function setAudit(?Audit $audit): static
     {
-        $this->audit_id = $audit_id;
+        $this->audit = $audit;
 
         return $this;
     }
@@ -104,7 +106,7 @@ class AuditSection
     {
         if (!$this->auditSubsections->contains($auditSubsection)) {
             $this->auditSubsections->add($auditSubsection);
-            $auditSubsection->setAuditSectionId($this);
+            $auditSubsection->setAuditSection($this);
         }
 
         return $this;
@@ -114,8 +116,8 @@ class AuditSection
     {
         if ($this->auditSubsections->removeElement($auditSubsection)) {
             // set the owning side to null (unless already changed)
-            if ($auditSubsection->getAuditSectionId() === $this) {
-                $auditSubsection->setAuditSectionId(null);
+            if ($auditSubsection->getAuditSection() === $this) {
+                $auditSubsection->setAuditSection(null);
             }
         }
 

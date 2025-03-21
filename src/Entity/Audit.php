@@ -2,12 +2,14 @@
 
 namespace App\Entity;
 
+use ApiPlatform\Metadata\ApiResource;
 use App\Repository\AuditRepository;
 use Doctrine\Common\Collections\ArrayCollection;
 use Doctrine\Common\Collections\Collection;
 use Doctrine\ORM\Mapping as ORM;
 
 #[ORM\Entity(repositoryClass: AuditRepository::class)]
+#[ApiResource()]
 class Audit
 {
     #[ORM\Id]
@@ -17,7 +19,7 @@ class Audit
 
     #[ORM\ManyToOne(inversedBy: 'audits')]
     #[ORM\JoinColumn(nullable: false)]
-    private ?Company $company_id = null;
+    private ?Company $company = null;
 
     #[ORM\Column(length: 255)]
     private ?string $name = null;
@@ -31,11 +33,11 @@ class Audit
     /**
      * @var Collection<int, AuditSection>
      */
-    #[ORM\OneToMany(targetEntity: AuditSection::class, mappedBy: 'audit_id')]
+    #[ORM\OneToMany(targetEntity: AuditSection::class, mappedBy: 'audit')]
     private Collection $auditSections;
 
     #[ORM\ManyToOne(inversedBy: 'audits')]
-    private ?User $agent_id = null;
+    private ?User $agent = null;
 
     public function __construct()
     {
@@ -47,14 +49,14 @@ class Audit
         return $this->id;
     }
 
-    public function getCompanyId(): ?Company
+    public function getCompany(): ?Company
     {
-        return $this->company_id;
+        return $this->company;
     }
 
-    public function setCompanyId(?Company $company_id): static
+    public function setCompany(?Company $company): static
     {
-        $this->company_id = $company_id;
+        $this->company = $company;
 
         return $this;
     }
@@ -107,7 +109,7 @@ class Audit
     {
         if (!$this->auditSections->contains($auditSection)) {
             $this->auditSections->add($auditSection);
-            $auditSection->setAuditId($this);
+            $auditSection->setAudit($this);
         }
 
         return $this;
@@ -117,22 +119,22 @@ class Audit
     {
         if ($this->auditSections->removeElement($auditSection)) {
             // set the owning side to null (unless already changed)
-            if ($auditSection->getAuditId() === $this) {
-                $auditSection->setAuditId(null);
+            if ($auditSection->getAudit() === $this) {
+                $auditSection->setAudit(null);
             }
         }
 
         return $this;
     }
 
-    public function getAgentId(): ?User
+    public function getAgent(): ?User
     {
-        return $this->agent_id;
+        return $this->agent;
     }
 
-    public function setAgentId(?User $agent_id): static
+    public function setAgent(?User $agent): static
     {
-        $this->agent_id = $agent_id;
+        $this->agent = $agent;
 
         return $this;
     }
