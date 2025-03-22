@@ -5,8 +5,11 @@ namespace App\Entity;
 use ApiPlatform\Metadata\ApiResource;
 use App\Repository\AuditSubsectionRepository;
 use Doctrine\ORM\Mapping as ORM;
+use Symfony\Bridge\Doctrine\Validator\Constraints\UniqueEntity;
+use Symfony\Component\Validator\Constraints as Assert;
 
 #[ORM\Entity(repositoryClass: AuditSubsectionRepository::class)]
+#[UniqueEntity('name')]
 #[ApiResource()]
 class AuditSubsection
 {
@@ -67,7 +70,7 @@ class AuditSubsection
 
     public function setCreatedAt(\DateTimeImmutable $createdAt): static
     {
-        $this->createdAt = $createdAt;
+        $this->createdAt = $this->createdAt ?? $createdAt;
 
         return $this;
     }
@@ -79,7 +82,7 @@ class AuditSubsection
 
     public function setUpdatedAt(\DateTimeImmutable $updatedAt): static
     {
-        $this->updatedAt = $updatedAt;
+        $this->updatedAt = $this->updatedAt ?? $updatedAt;
 
         return $this;
     }

@@ -3,10 +3,12 @@
 namespace App\Entity;
 
 use ApiPlatform\Metadata\ApiResource;
+use ApiPlatform\Metadata\Delete;
 use ApiPlatform\Metadata\Get;
 use ApiPlatform\Metadata\GetCollection;
 use ApiPlatform\Metadata\Post;
 use ApiPlatform\Metadata\Patch;
+use ApiPlatform\Metadata\Put;
 use App\Controller\RetrieveCurrentUserInfosController;
 use App\Repository\UserRepository;
 use Doctrine\Common\Collections\ArrayCollection;
@@ -18,10 +20,13 @@ use Symfony\Component\Serializer\Annotation\Groups;
 use Symfony\Component\Validator\Constraints as Assert;
 use Symfony\Component\Validator\Constraints\PasswordStrength;
 
+use function Symfony\Component\Clock\now;
+
 #[ORM\Entity(repositoryClass: UserRepository::class)]
 #[ORM\UniqueConstraint(name: 'UNIQ_IDENTIFIER_USERNAME', fields: ['username'])]
 #[ApiResource(
-    security: "is_granted('ROLE_USER')",
+    security: "is_granted('ROLE_ADMIN')",
+    securityMessage: "You're not allowed to access this methods",
     operations: [
         new Get(
             name: 'retrieve me',
@@ -29,15 +34,18 @@ use Symfony\Component\Validator\Constraints\PasswordStrength;
             controller: RetrieveCurrentUserInfosController::class,
             read: false,
             description: 'Retrieve current user info',
-            normalizationContext: ['groups' => ['read']],
-            denormalizationContext: ['groups' => ['read']]
+            security: "is_granted('ROLE_USER')"
+        ),
+        new Get(),
+        new GetCollection(
+            normalizationContext: ['groups' => ['read:User:Collection']]
         ),
         new Post(),
-        new Patch(),
-        new GetCollection()
+        new Put(),
+        new Delete()
     ],
-    normalizationContext: ['groups' => ['read']],
-    denormalizationContext: ['groups' => ['read']]
+    normalizationContext: ['groups' => ['read:item']],
+    denormalizationContext: ['groups' => ['write:User:item']]
 )]
 
 class User implements UserInterface, PasswordAuthenticatedUserInterface
@@ -45,18 +53,22 @@ class User implements UserInterface, PasswordAuthenticatedUserInterface
     #[ORM\Id]
     #[ORM\GeneratedValue]
     #[ORM\Column]
+    #[Groups(['read:User:Collection'])]
     private ?int $id = null;
 
     #[ORM\Column(length: 180)]
-    #[Groups(['read'])]
-    #[Assert\Length(min: 3, max: 180)]
-    #[Assert\NotBlank()]
+    #[Groups(['read:item', 'write:User:item', 'read:User:Collection'])]
+    #[Assert\Sequentially([
+        new Assert\NotBlank(),
+        new Assert\Length(min: 3, max: 180),
+    ])]
     private ?string $username = null;
 
     /**
      * @var list<string> The user roles
      */
     #[ORM\Column]
+    #[Groups(['write:User:item'])]
     #[Assert\Choice(choices: ['ROLE_USER', 'ROLE_ADMIN'], multiple: true)]
     private array $roles = [];
 
@@ -64,31 +76,42 @@ class User implements UserInterface, PasswordAuthenticatedUserInterface
      * @var string The hashed password
      */
     #[ORM\Column]
-    #[Assert\Type('string')]
-    #[Assert\PasswordStrength(minScore: PasswordStrength::STRENGTH_WEAK)]
+    #[Groups(['write:User:item'])]
+    #[Assert\Sequentially([
+        new Assert\NotBlank(),
+        new Assert\Type('string'),
+        new Assert\PasswordStrength(minScore: PasswordStrength::STRENGTH_WEAK)
+    ])]
     private ?string $password = null;
 
     #[ORM\Column(length: 255)]
-    #[Groups(['read'])]
-    #[Assert\Email()]
-    #[Assert\NotBlank()]
+    #[Groups(['read:item', 'write:User:item', 'read:User:Collection'])]
+    #[Assert\Sequentially([
+        new Assert\NotBlank(),
+        new Assert\Email()
+    ])]
     private ?string $email = null;
 
     /**
      * @var Collection<int, Audit>
      */
     #[ORM\OneToMany(targetEntity: Audit::class, mappedBy: 'agent')]
+    #[Groups(['read:item', 'read:User:Collection'])]
     private Collection $audits;
 
     #[ORM\Column]
+    #[Assert\DateTime(format: 'Y-m-d H:i:s', message: 'Le format de la date doit être comme suit: 2020-12-31 17:24:45')]
     private ?\DateTimeImmutable $createdAt = null;
 
     #[ORM\Column]
+    #[Assert\DateTime(format: 'Y-m-d H:i:s')]
     private ?\DateTimeImmutable $updatedAt = null;
 
     public function __construct()
     {
         $this->audits = new ArrayCollection();
+        $this->createdAt = now();
+        $this->updatedAt = now();
     }
 
     public function getId(): ?int
@@ -214,7 +237,7 @@ class User implements UserInterface, PasswordAuthenticatedUserInterface
 
     public function setCreatedAt(\DateTimeImmutable $createdAt): static
     {
-        $this->createdAt = $createdAt;
+        $this->createdAt = $this->createdAt ?? $createdAt;
 
         return $this;
     }
@@ -226,7 +249,7 @@ class User implements UserInterface, PasswordAuthenticatedUserInterface
 
     public function setUpdatedAt(\DateTimeImmutable $updatedAt): static
     {
-        $this->updatedAt = $updatedAt;
+        $this->updatedAt = $this->updatedAt ?? $updatedAt;
 
         return $this;
     }

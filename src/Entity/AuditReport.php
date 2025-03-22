@@ -6,8 +6,13 @@ use ApiPlatform\Metadata\ApiResource;
 use App\Repository\AuditReportRepository;
 use Doctrine\DBAL\Types\Types;
 use Doctrine\ORM\Mapping as ORM;
+use Symfony\Bridge\Doctrine\Validator\Constraints\UniqueEntity;
+use Symfony\Component\Validator\Constraints as Assert;
+
+use function Symfony\Component\Clock\now;
 
 #[ORM\Entity(repositoryClass: AuditReportRepository::class)]
+#[UniqueEntity('name')]
 #[ApiResource()]
 class AuditReport
 {
@@ -21,6 +26,10 @@ class AuditReport
     private ?AuditSubsection $audit_subsection = null;
 
     #[ORM\Column(type: Types::TEXT, nullable: true)]
+    #[Assert\Sequentially([
+        new Assert\NotBlank(),
+        new Assert\Length(min: 8)
+    ])]
     private ?string $report_message = null;
 
     #[ORM\Column(length: 255, nullable: true)]
@@ -28,6 +37,17 @@ class AuditReport
 
     #[ORM\Column]
     private ?bool $is_okey = null;
+
+    #[ORM\Column]
+    private ?\DateTimeImmutable $createdAt = null;
+
+    #[ORM\Column]
+    private ?\DateTimeImmutable $updatedAt = null;
+
+    public function __construct() {
+        $this->createdAt = now();
+        $this->updatedAt = now();
+    }
 
     public function getId(): ?int
     {
@@ -78,6 +98,30 @@ class AuditReport
     public function setIsOkey(bool $is_okey): static
     {
         $this->is_okey = $is_okey;
+
+        return $this;
+    }
+    
+    public function getCreatedAt(): ?\DateTimeImmutable
+    {
+        return $this->createdAt;
+    }
+
+    public function setCreatedAt(\DateTimeImmutable $createdAt): static
+    {
+        $this->createdAt = $this->createdAt ?? $createdAt;
+
+        return $this;
+    }
+
+    public function getUpdatedAt(): ?\DateTimeImmutable
+    {
+        return $this->updatedAt;
+    }
+
+    public function setUpdatedAt(\DateTimeImmutable $updatedAt): static
+    {
+        $this->updatedAt = $this->updatedAt ?? $updatedAt;
 
         return $this;
     }

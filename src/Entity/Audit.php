@@ -7,9 +7,16 @@ use App\Repository\AuditRepository;
 use Doctrine\Common\Collections\ArrayCollection;
 use Doctrine\Common\Collections\Collection;
 use Doctrine\ORM\Mapping as ORM;
+use Symfony\Bridge\Doctrine\Validator\Constraints\UniqueEntity;
+use Symfony\Component\Serializer\Annotation\Groups;
+use Symfony\Component\Validator\Constraints as Assert;
+
+use function Symfony\Component\Clock\now;
 
 #[ORM\Entity(repositoryClass: AuditRepository::class)]
 #[ApiResource()]
+#[UniqueEntity('name')]
+
 class Audit
 {
     #[ORM\Id]
@@ -22,6 +29,10 @@ class Audit
     private ?Company $company = null;
 
     #[ORM\Column(length: 255)]
+    #[Assert\Sequentially([
+        new Assert\NotBlank(),
+        new Assert\Length(min: 8, max: 180)
+    ])]
     private ?string $name = null;
 
     #[ORM\Column]
@@ -42,6 +53,8 @@ class Audit
     public function __construct()
     {
         $this->auditSections = new ArrayCollection();
+        $this->createdAt = now();
+        $this->updatedAt = now();
     }
 
     public function getId(): ?int
@@ -80,7 +93,7 @@ class Audit
 
     public function setCreatedAt(\DateTimeImmutable $createdAt): static
     {
-        $this->createdAt = $createdAt;
+        $this->createdAt = $this->createdAt ?? $createdAt;
 
         return $this;
     }
@@ -92,7 +105,7 @@ class Audit
 
     public function setUpdatedAt(\DateTimeImmutable $updatedAt): static
     {
-        $this->updatedAt = $updatedAt;
+        $this->updatedAt = $this->updatedAt ?? $updatedAt;
 
         return $this;
     }

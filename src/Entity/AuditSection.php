@@ -7,8 +7,13 @@ use App\Repository\AuditSectionRepository;
 use Doctrine\Common\Collections\ArrayCollection;
 use Doctrine\Common\Collections\Collection;
 use Doctrine\ORM\Mapping as ORM;
+use Symfony\Bridge\Doctrine\Validator\Constraints\UniqueEntity;
+use Symfony\Component\Validator\Constraints as Assert;
+
+use function Symfony\Component\Clock\now;
 
 #[ORM\Entity(repositoryClass: AuditSectionRepository::class)]
+#[UniqueEntity('name')]
 #[ApiResource()]
 class AuditSection
 {
@@ -39,6 +44,8 @@ class AuditSection
     public function __construct()
     {
         $this->auditSubsections = new ArrayCollection();
+        $this->createdAt = now();
+        $this->updatedAt = now();
     }
 
     public function getId(): ?int
@@ -65,7 +72,7 @@ class AuditSection
 
     public function setCreatedAt(\DateTimeImmutable $createdAt): static
     {
-        $this->createdAt = $createdAt;
+        $this->createdAt = $this->createdAt ?? $createdAt;
 
         return $this;
     }
@@ -77,7 +84,7 @@ class AuditSection
 
     public function setUpdatedAt(\DateTimeImmutable $updatedAt): static
     {
-        $this->updatedAt = $updatedAt;
+        $this->updatedAt = $this->updatedAt ?? $updatedAt;
 
         return $this;
     }
